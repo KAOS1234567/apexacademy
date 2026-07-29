@@ -20,7 +20,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
-        <ThemeProvider defaultTheme="light" storageKey="apex-academy-theme">
+        <ThemeProvider
+          defaultTheme="light"
+          storageKey="apex-academy-theme"
+        >
           {children}
         </ThemeProvider>
       </body>
