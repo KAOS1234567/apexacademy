@@ -17,7 +17,7 @@ type ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>({
   theme: "system",
-  setTheme: () => null,
+  setTheme: () => {},
 });
 
 export function ThemeProvider({
@@ -25,48 +25,39 @@ export function ThemeProvider({
   defaultTheme = "system",
   storageKey = "apex-academy-theme",
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
-  );
+  const [theme, setTheme] = useState<Theme>(defaultTheme);
 
   useEffect(() => {
-    const root = window.document.documentElement;
+    const savedTheme = localStorage.getItem(storageKey) as Theme | null;
+
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+  }, [storageKey]);
+
+  useEffect(() => {
+    const root = document.documentElement;
 
     root.classList.remove("light", "dark");
 
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light";
+    const appliedTheme =
+      theme === "system"
+        ? window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light"
+        : theme;
 
-      root.classList.add(systemTheme);
-      return;
-    }
-
-    root.classList.add(theme);
-  }, [theme]);
-
-  const value = {
-    theme,
-    setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme);
-      setTheme(theme);
-    },
-  };
+    root.classList.add(appliedTheme);
+    localStorage.setItem(storageKey, theme);
+  }, [theme, storageKey]);
 
   return (
-    <ThemeProviderContext.Provider value={value}>
+    <ThemeProviderContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeProviderContext.Provider>
   );
 }
 
-export const useTheme = () => {
-  const context = useContext(ThemeProviderContext);
-
-  if (context === undefined)
-    throw new Error("useTheme must be used within a ThemeProvider");
-
-  return context;
-};
+export function useTheme() {
+  return useContext(ThemeProviderContext);
+  }
