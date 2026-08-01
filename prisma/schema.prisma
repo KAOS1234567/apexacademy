@@ -1,0 +1,65 @@
+// ===========================================
+// ApexAcademy Cloud - Prisma Schema
+// ===========================================
+// This is the single source of truth for the database schema.
+// Uses Supabase PostgreSQL with connection pooling.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ===========================================
+// Core Entities (minimal foundation)
+// ===========================================
+
+/// Academy (Tenant) - Root entity for multi-tenancy
+model Academy {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+  players   Player[]
+
+  @@map("academies")
+}
+
+/// User - Staff member operating within an Academy
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String?  // Nullable for OAuth users
+  role      String   @default("COACH")
+  academyId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  academy   Academy  @relation(fields: [academyId], references: [id], onDelete: Cascade)
+
+  @@map("users")
+}
+
+/// Player - Athlete managed by the Academy
+model Player {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String?  @unique
+  dateOfBirth DateTime?
+  academyId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  academy   Academy  @relation(fields: [academyId], references: [id], onDelete: Cascade)
+
+  @@map("players")
+}
