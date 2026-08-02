@@ -62,7 +62,13 @@ model Player {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+teamMemberships TeamMembership[]
   academy   Academy  @relation(fields: [academyId], references: [id], onDelete: Cascade)
 
   @@map("players")
 }
+Team
+TeamMembership
+TrainingSession
+Match
+MatchEvent
