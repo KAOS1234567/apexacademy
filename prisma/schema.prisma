@@ -28,6 +28,9 @@ model Academy {
 
   users     User[]
   players   Player[]
+teams             Team[]
+trainingSessions  TrainingSession[]
+matches           Match[]
 
   @@map("academies")
 }
