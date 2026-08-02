@@ -1,88 +1,146 @@
-// ===========================================
-// ApexAcademy Cloud - Prisma Schema
-// ===========================================
-// This is the single source of truth for the database schema.
-// Uses Supabase PostgreSQL with connection pooling.
-
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
-}
-
-// ===========================================
-// Core Entities (minimal foundation)
-// ===========================================
-
-/// Academy (Tenant) - Root entity for multi-tenancy
-model Academy {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  users     User[]
-  players   Player[]
-teams             Team[]
-trainingSessions  TrainingSession[]
-matches           Match[]
-
-  @@map("academies")
-}
-
-/// User - Staff member operating within an Academy
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String?  // Nullable for OAuth users
-  role      String   @default("COACH")
-  academyId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  academy   Academy  @relation(fields: [academyId], references: [id], onDelete: Cascade)
-
-  @@map("users")
-}
-
-/// Player - Athlete managed by the Academy
-model Player {
-  id        String   @id @default(cuid())
-  firstName String
-  lastName  String
-  email     String?  @unique
-  dateOfBirth DateTime?
-  academyId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-teamMemberships TeamMembership[]
-  academy   Academy  @relation(fields: [academyId], references: [id], onDelete: Cascade)
-
-  @@map("players")
-}
-model Team {
-  ...
-}
-
-model TeamMembership {
-  ...
-}
-
-model TrainingSession {
-  ...
-}
-
-model Match {
-  ...
-}
-
-model MatchEvent {
-  ...
-}
+generator client {  
+  provider = "prisma-client-js"  
+}  
+  
+datasource db {  
+  provider  = "postgresql"  
+  url       = env("DATABASE_URL")  
+  directUrl = env("DIRECT_URL")  
+}  
+  
+model Academy {  
+  id               String            @id @default(cuid())  
+  name             String  
+  slug             String            @unique  
+  createdAt        DateTime          @default(now())  
+  updatedAt        DateTime          @updatedAt  
+  users            User[]  
+  players          Player[]  
+  teams            Team[]  
+  trainingSessions TrainingSession[]  
+  matches          Match[]  
+  
+  @@map("academies")  
+}  
+  
+model User {  
+  id        String   @id @default(cuid())  
+  email     String   @unique  
+  name      String  
+  password  String?  
+  role      String  
+  academyId String  
+  createdAt DateTime @default(now())  
+  updatedAt DateTime @updatedAt  
+  academy   Academy  @relation(fields: [academyId], references: [id], onDelete: Cascade)  
+  
+  @@map("users")  
+}  
+  
+model Player {  
+  id              String            @id @default(cuid())  
+  firstName       String  
+  lastName        String  
+  email           String?           @unique  
+  dateOfBirth     DateTime?  
+  academyId       String  
+  createdAt       DateTime          @default(now())  
+  updatedAt       DateTime          @updatedAt  
+  academy         Academy           @relation(fields: [academyId], references: [id], onDelete: Cascade)  
+  teamMemberships TeamMembership[]  
+  
+  @@map("players")  
+}  
+  
+model Team {  
+  id               String            @id @default(cuid())  
+  name             String  
+  ageGroup         String  
+  season           String  
+  academyId        String  
+  createdAt        DateTime          @default(now())  
+  updatedAt        DateTime          @updatedAt  
+  academy          Academy           @relation(fields: [academyId], references: [id], onDelete: Cascade)  
+  members          TeamMembership[]  
+  trainingSessions TrainingSession[]  
+  homeMatches      Match[]           @relation("HomeTeam")  
+  awayMatches      Match[]           @relation("AwayTeam")  
+  
+  @@unique([name, season, academyId])  
+  @@map("teams")  
+}  
+  
+model TeamMembership {  
+  id          String   @id @default(cuid())  
+  teamId      String  
+  playerId    String  
+  role        String   @default("PLAYER")  
+  shirtNumber Int?  
+  joinedAt    DateTime @default(now())  
+  leftAt      DateTime?  
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)  
+  player      Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)  
+  
+  @@unique([teamId, playerId])  
+  @@map("team_memberships")  
+}  
+  
+model TrainingSession {  
+  id          String   @id @default(cuid())  
+  title       String  
+  description String?  
+  date        DateTime  
+  duration    Int  
+  location    String?  
+  sessionType String   @default("REGULAR")  
+  notes       String?  
+  teamId      String  
+  academyId   String  
+  createdAt   DateTime @default(now())  
+  updatedAt   DateTime @updatedAt  
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)  
+  academy     Academy  @relation(fields: [academyId], references: [id], onDelete: Cascade)  
+  
+  @@index([teamId, date])  
+  @@index([academyId, date])  
+  @@map("training_sessions")  
+}  
+  
+model Match {  
+  id          String       @id @default(cuid())  
+  date        DateTime  
+  location    String?  
+  opponent    String?  
+  homeScore   Int?  
+  awayScore   Int?  
+  status      String       @default("SCHEDULED")  
+  matchType   String       @default("FRIENDLY")  
+  notes       String?  
+  homeTeamId  String  
+  awayTeamId  String  
+  academyId   String  
+  createdAt   DateTime     @default(now())  
+  updatedAt   DateTime     @updatedAt  
+  homeTeam    Team         @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade)  
+  awayTeam    Team         @relation("AwayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade)  
+  academy     Academy      @relation(fields: [academyId], references: [id], onDelete: Cascade)  
+  events      MatchEvent[]  
+  
+  @@index([academyId, date])  
+  @@map("matches")  
+}  
+  
+model MatchEvent {  
+  id          String   @id @default(cuid())  
+  matchId     String  
+  playerId    String?  
+  eventType   String  
+  minute      Int  
+  extraMinute Int?  
+  description String?  
+  createdAt   DateTime @default(now())  
+  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)  
+  
+  @@index([matchId, minute])  
+  @@map("match_events")  
+}  
