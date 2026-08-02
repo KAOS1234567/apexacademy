@@ -67,8 +67,22 @@ teamMemberships TeamMembership[]
 
   @@map("players")
 }
-Team
-TeamMembership
-TrainingSession
-Match
-MatchEvent
+model Team {
+  ...
+}
+
+model TeamMembership {
+  ...
+}
+
+model TrainingSession {
+  ...
+}
+
+model Match {
+  ...
+}
+
+model MatchEvent {
+  ...
+}
